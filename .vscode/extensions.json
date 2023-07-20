@@ -1,0 +1,30 @@
+{
+  // List all installed extensions:
+  // $ code --list-extensions;
+  "recommendations": [
+    // Trailing Spaces
+    // $ code --install-extension shardulm94.trailing-spaces;
+    "shardulm94.trailing-spaces",
+    // Extension Pack for Java
+    // $ code --install-extension vscjava.vscode-java-pack;
+    "vscjava.vscode-java-pack",
+    // Checkstyle for Java
+    // $ code --install-extension shengchen.vscode-checkstyle;
+    "shengchen.vscode-checkstyle",
+    // XML
+    // $ code --install-extension redhat.vscode-xml;
+    "redhat.vscode-xml",
+    // SonarLint
+    // $ code --install-extension SonarSource.sonarlint-vscode;
+    "SonarSource.sonarlint-vscode",
+    // Spring Boot Extension Pack
+    // $ code --install-extension Pivotal.vscode-boot-dev-pack;
+    "Pivotal.vscode-boot-dev-pack",
+    // Spring Boot Dashboard
+    // $ code --install-extension vscjava.vscode-spring-boot-dashboard;
+    "vscjava.vscode-spring-boot-dashboard",
+    // Lombok Annotations Support for VS Code
+    // $ code --install-extension vscjava.vscode-lombok;
+    "vscjava.vscode-lombok",
+  ]
+}

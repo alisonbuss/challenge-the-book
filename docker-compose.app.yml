@@ -1,0 +1,64 @@
+##
+# DOCUMENTATION:
+#
+# Docker Compose for providing service of the application.
+#
+# @Fonts:
+#   https://hub.docker.com/_/maven
+#   https://hub.docker.com/_/openjdk
+#   https://hub.docker.com/r/bitnami/minideb
+#   https://www.renatofialho.com/blog/creating-slim-spring-boot-images
+#   https://dev.to/fialhorenato/how-to-create-slim-docker-java-images-using-a-minimal-jre-3a20
+#
+# @example:
+#   Validate and preview the compose file:
+#   $ docker-compose --file ./docker-compose.app.yml config;
+#
+#   Create or rebuild services and build images in parallel:
+#   $ docker-compose --file ./docker-compose.app.yml build --parallel;
+#
+#   Create or rebuild services in detached mode:
+#   $ docker-compose --file ./docker-compose.app.yml up --detach;
+#
+#   Lists all Compose containers:
+#   $ docker-compose --file ./docker-compose.app.yml ps;
+#
+#   To destroy all services, network, volumes and images:
+#   $ docker-compose --file ./docker-compose.app.yml down;
+#   $ docker-compose --file ./docker-compose.app.yml rm -f;
+
+# Compose and Docker compatibility matrix.
+# Compose file format: 3.8
+# Docker Engine release: 19.03.0+
+version: "3.8"
+
+# Defining swarm volumes with the DRIVER(local).
+volumes:
+  vol_app_data:
+
+# Defining a local network with the DRIVER(bridge).
+networks:
+  network_local:
+    external: false
+
+# Defining container services for Compose.
+services:
+
+  # Application service in Spring Boot:
+  app_webapi:
+    image: image/app/webapi
+    container_name: app_webapi
+    env_file:
+      - .env
+    environment:
+      APP_HELLO_WORLD: 'Custom Hello World! Docker \O/'
+    build:
+      context: ./
+      dockerfile: Dockerfile-Java17
+    ports:
+      - "8081:8080"
+    networks:
+      - network_local
+    volumes:
+      - "./logs:/logs"
+    restart: on-failure

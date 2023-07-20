@@ -1,0 +1,75 @@
+# Create slim docker Java Images using a minimal JRE.
+#
+# Support sources for building this Dockerfile:
+#   https://www.renatofialho.com/blog/creating-slim-spring-boot-images
+#   https://dev.to/fialhorenato/how-to-create-slim-docker-java-images-using-a-minimal-jre-3a20
+
+# ---- Base ----
+FROM maven:3.8.5-openjdk-17-slim AS base
+
+# Set default image directory at runtime:
+ARG APP_WORKDIR
+
+# Set default image directory:
+ENV APP_WORKDIR="${APP_WORKDIR:-/home/app}"
+
+# Set the /home/app directory to a (working directory):
+WORKDIR "${APP_WORKDIR}"
+
+
+# ---- Builder ----
+FROM base AS builder
+
+# Copy the pom.xml file from the current directory to the
+# container's current directory:
+COPY pom.xml .
+
+# This command resolves all Java project dependencies:
+RUN mvn --errors --batch-mode dependency:resolve
+
+# Copy project source files to the container's current directory:
+COPY src ./src
+
+# Clean up the target directory where Maven normally
+# builds the project and build dependencies:
+RUN mvn clean --errors --batch-mode package -Dmaven.test.skip=true
+
+
+# ---- JRE Minimal ----
+FROM openjdk:17 as jre_minimal
+
+USER root
+
+# Build our minimal JRE using jlink
+RUN jlink \
+    --module-path "$JAVA_HOME/jmods" \
+    --add-modules java.compiler,java.sql,java.naming,java.management,java.instrument,java.rmi,java.desktop,jdk.internal.vm.compiler.management,java.xml.crypto,java.scripting,java.security.jgss,jdk.httpserver,java.net.http,jdk.naming.dns,jdk.crypto.cryptoki,jdk.unsupported \
+    --verbose \
+    --strip-debug \
+    --compress 2 \
+    --no-header-files \
+    --no-man-pages \
+    --output /opt/jre-minimal
+
+USER app
+
+
+# ---- Deploy ----
+FROM bitnami/minideb:bullseye AS deploy
+
+# Set default image directory at runtime:
+ARG APP_WORKDIR
+
+# Set default image directory:
+ENV APP_WORKDIR="${APP_WORKDIR:-/home/app}"
+
+# Copy the JRE created in the last step into our $JAVA_HOME:
+COPY --from=jre_minimal /opt/jre-minimal $JAVA_HOME
+
+# Copy the file "/home/app/*.jar" compiled in the build process:
+COPY --from=builder ${APP_WORKDIR}/target/*.jar ./application.jar
+
+# Run the application!!! \O/
+ENTRYPOINT ["java", "-jar", "./application.jar"]
+
+CMD ["-ric", "/EUR="]

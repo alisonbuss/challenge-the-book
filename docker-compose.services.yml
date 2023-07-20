@@ -1,0 +1,93 @@
+##
+# DOCUMENTATION:
+#
+# Docker Compose for providing services of the caching,
+# messaging, database and database manager.
+#
+# @Fonts:
+#   https://www.postgresql.org/docs/
+#   https://www.pgadmin.org/docs/
+#
+# @example:
+#   Validate and preview the compose file:
+#   $ docker-compose --file ./docker-compose.services.yml config;
+#
+#   Create or rebuild services and build images in parallel:
+#   $ docker-compose --file ./docker-compose.services.yml build --parallel;
+#
+#   Create or rebuild services in detached mode:
+#   $ docker-compose --file ./docker-compose.services.yml up --detach;
+#
+#   Lists all Compose containers:
+#   $ docker-compose --file ./docker-compose.services.yml ps;
+#
+#   To destroy all services, network, volumes and images:
+#   $ docker-compose --file ./docker-compose.services.yml down;
+#   $ docker-compose --file ./docker-compose.services.yml rm -f;
+
+# Compose and Docker compatibility matrix.
+# Compose file format: 3.8
+# Docker Engine release: 19.03.0+
+version: "3.8"
+
+# Defining swarm volumes with the DRIVER(local).
+volumes:
+  vol_postgres_data:
+
+# Defining a local network with the DRIVER(bridge).
+networks:
+  network_local:
+    external: false
+
+# Defining container services for Compose.
+services:
+
+  # Database service using PostgreSQL:
+  database_postgres_server:
+    image: postgres:13.3
+    container_name: postgres_server
+    user: postgres
+    environment:
+      POSTGRES_DB: postgres
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: 'P@ssw0rd!'
+      PGDATA: "/var/lib/postgresql/data"
+    ports:
+      - "5432:5432"
+    networks:
+      - network_local
+    volumes:
+      - "./files/services/postgresql/sql-scripts:/docker-entrypoint-initdb.d"
+      # - "vol_postgres_data:/var/lib/postgresql/data"
+    restart: on-failure
+    # The HEALTHCHECK instruction tells Docker how to test a container to check that it is still working.
+    healthcheck:
+      test: [
+        "CMD", "pg_isready",
+        "-t", "1",
+        "-h", "0.0.0.0",
+        "-p", "5432"
+      ]
+      interval: 5s
+      timeout: 2s
+      retries: 8
+      start_period: 18s
+
+  # pgAdmin a database management service for PostgreSQL:
+  # UI Web: http://localhost:8083
+  database_pgadmin_server:
+    image: dpage/pgadmin4:7.4
+    container_name: pgadmin_server
+    depends_on:
+      - database_postgres_server
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@email.com
+      PGADMIN_DEFAULT_PASSWORD: 'P@ssw0rd!'
+      PGADMIN_LISTEN_PORT: 80
+    ports:
+      - "8083:80"
+    networks:
+      - network_local
+    volumes:
+      - "./files/services/pgadmin4/servers.json:/pgadmin4/servers.json"
+    restart: on-failure
